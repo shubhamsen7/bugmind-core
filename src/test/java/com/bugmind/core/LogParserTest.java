@@ -4,44 +4,43 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for structured LogParser.parseLine()
+ * Unit tests for {@link LogParser}.
  */
-class LogParserTest {
+public class LogParserTest {
 
-    // P2P 1: valid line with timestamp, level, and exception
+    private final LogParser parser = new LogParser();
+
     @Test
-    void parseLine_validErrorLine_returnsAllFields() {
-        String line = "2025-10-27 12:10:00 ERROR NullPointerException occurred";
-        ParsedLog p = LogParser.parseLine(line);
-        assertNotNull(p);
-        assertEquals("2025-10-27 12:10:00", p.getTimestamp());
-        assertEquals("ERROR", p.getLevel());
-        assertEquals("NullPointerException", p.getErrorType());
+    void testFullLogParsing() {
+        String log = "[2025-10-27 12:00:00] ERROR - NullPointerException occurred";
+        ParsedLog result = parser.parseLine(log);
+
+        assertNotNull(result);
+        assertEquals("2025-10-27 12:00:00", result.getTimestamp());
+        assertEquals("ERROR", result.getLevel());
+        assertEquals("NullPointerException occurred", result.getMessage());
+        assertEquals("NullPointerException", result.getExceptionType());
     }
 
-    // P2P 2: line without exception
     @Test
-    void parseLine_noException_returnsPartial() {
-        String line = "2025-10-27 INFO Starting server on port 8080";
-        ParsedLog p = LogParser.parseLine(line);
-        assertNotNull(p);
-        assertEquals("INFO", p.getLevel());
-        assertNull(p.getErrorType());
+    void testPartialLogParsing() {
+        String log = "[2025-10-27 13:00:00] INFO - User logged in";
+        ParsedLog result = parser.parseLine(log);
+
+        assertNotNull(result);
+        assertEquals("INFO", result.getLevel());
+        assertNull(result.getExceptionType());
     }
 
-    // P2P 3: line with whitespace and control chars
     @Test
-    void parseLine_withTabsAndSpaces_trimsProperly() {
-        String line = "\n\t2025-10-27 12:00:01\t WARN AssertionError: failed\t\n";
-        ParsedLog p = LogParser.parseLine(line);
-        assertNotNull(p);
-        assertEquals("AssertionError", p.getErrorType());
-        assertEquals("WARN", p.getLevel());
+    void testInvalidLogReturnsNull() {
+        String log = "2025-10-27 13:00:00 INFO User logged in";
+        assertNull(parser.parseLine(log));
     }
 
-    // P2P 4: null input returns null
     @Test
-    void parseLine_null_returnsNull() {
-        assertNull(LogParser.parseLine(null));
+    void testBlankOrNullInput() {
+        assertNull(parser.parseLine(""));
+        assertNull(parser.parseLine(null));
     }
 }

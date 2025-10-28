@@ -1,18 +1,19 @@
 package com.bugmind.core;
 
 /**
- * Simple data model representing parsed log details.
+ * Represents a structured log entry parsed from raw text.
  */
 public class ParsedLog {
-
     private final String timestamp;
     private final String level;
-    private final String errorType;
+    private final String message;
+    private final String exceptionType;
 
-    public ParsedLog(String timestamp, String level, String errorType) {
+    public ParsedLog(String timestamp, String level, String message, String exceptionType) {
         this.timestamp = timestamp;
         this.level = level;
-        this.errorType = errorType;
+        this.message = message;
+        this.exceptionType = exceptionType;
     }
 
     public String getTimestamp() {
@@ -23,17 +24,17 @@ public class ParsedLog {
         return level;
     }
 
-    public String getErrorType() {
-        return errorType;
+    public String getMessage() {
+        return message;
     }
 
-    public boolean hasAnyField() {
-        return timestamp != null || level != null || errorType != null;
+    public String getExceptionType() {
+        return exceptionType;
     }
 
     @Override
     public String toString() {
-        return String.format("[time=%s, level=%s, error=%s]",
-                timestamp, level, errorType);
+        return "[" + timestamp + "] " + level + ": " + message +
+               (exceptionType != null ? " (" + exceptionType + ")" : "");
     }
 }
