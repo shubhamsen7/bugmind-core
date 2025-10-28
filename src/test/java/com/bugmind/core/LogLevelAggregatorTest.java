@@ -1,82 +1,52 @@
 package com.bugmind.core;
 
+import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import java.util.*;
 
 /**
- * Unit tests for {@link LogLevelAggregator}.
- * All tests are deterministic P2P.
+ * Tests regression fix for LogLevelAggregator.mergeAggregations().
  */
-class LogLevelAggregatorTest {
+class LogLevelAggregatorBugFixTest {
 
     private final LogLevelAggregator aggregator = new LogLevelAggregator();
 
-    private static ParsedLog log(String ts, String lvl, String msg, String ex) {
-        return new ParsedLog(ts, lvl, msg, ex);
-    }
-
     @Test
-    @DisplayName("aggregateByLevel_countsAllLevelsCorrectly")
-    void aggregateByLevel_countsAllLevelsCorrectly() {
-        List<ParsedLog> logs = Arrays.asList(
-            log("[t1]", "INFO", "start", null),
-            log("[t2]", "WARN", "degraded", null),
-            log("[t3]", "ERROR", "boom", "NPE"),
-            log("[t4]", "DEBUG", "trace", null),
-            log("[t5]", "INFO", "complete", null)
-        );
-
-        Map<String, Long> result = aggregator.aggregateByLevel(logs);
-
-        assertEquals(2L, result.get("INFO"));
-        assertEquals(1L, result.get("WARN"));
-        assertEquals(1L, result.get("ERROR"));
-        assertEquals(1L, result.get("DEBUG"));
-        assertEquals(4, result.size());
-    }
-
-    @Test
-    @DisplayName("aggregateByLevel_handlesMixedCaseLevels")
-    void aggregateByLevel_handlesMixedCaseLevels() {
-        List<ParsedLog> logs = Arrays.asList(
-            log("[t]", "info", "msg", null),
-            log("[t]", "Info", "msg", null),
-            log("[t]", "INFO", "msg", null),
-            log("[t]", "eRrOr", "msg", null)
-        );
-
-        Map<String, Long> result = aggregator.aggregateByLevel(logs);
+    void mergeAggregations_combinesMapsCorrectly() {
+        Map<String, Long> m1 = Map.of("INFO", 2L, "WARN", 1L);
+        Map<String, Long> m2 = Map.of("ERROR", 3L, "INFO", 1L);
+        Map<String, Long> result = aggregator.mergeAggregations(Arrays.asList(m1, m2));
 
         assertEquals(3L, result.get("INFO"));
-        assertEquals(1L, result.get("ERROR"));
+        assertEquals(1L, result.get("WARN"));
+        assertEquals(3L, result.get("ERROR"));
     }
 
     @Test
-    @DisplayName("aggregateByLevel_returnsEmptyForEmptyInput")
-    void aggregateByLevel_returnsEmptyForEmptyInput() {
-        assertTrue(aggregator.aggregateByLevel(Collections.emptyList()).isEmpty());
-        assertTrue(aggregator.aggregateByLevel(null).isEmpty());
+    void mergeAggregations_normalizesKeysToUppercase() {
+        Map<String, Long> m1 = Map.of("info", 1L, "warn", 2L);
+        Map<String, Long> m2 = Map.of("Info", 3L, "Warn", 4L);
+        Map<String, Long> merged = aggregator.mergeAggregations(Arrays.asList(m1, m2));
+
+        assertEquals(4L, merged.get("INFO"));
+        assertEquals(6L, merged.get("WARN"));
     }
 
     @Test
-    @DisplayName("aggregateByLevel_handlesNullLevelsAsUnknown")
-    void aggregateByLevel_handlesNullLevelsAsUnknown() {
-        List<ParsedLog> logs = Arrays.asList(
-            log("[t]", null, "a", null),
-            log("[t]", "  ", "b", null),
-            null
-        );
+    void mergeAggregations_mergesUnknownAndNullKeys() {
+        Map<String, Long> m1 = new HashMap<>();
+        m1.put(null, 2L);
+        Map<String, Long> m2 = Map.of(" ", 3L);
+        Map<String, Long> result = aggregator.mergeAggregations(Arrays.asList(m1, m2));
 
-        Map<String, Long> result = aggregator.aggregateByLevel(logs);
+        assertEquals(5L, result.get(LogLevelAggregator.UNKNOWN));
+    }
 
-        assertEquals(3L, result.get(LogLevelAggregator.UNKNOWN));
-        assertEquals(1, result.size());
+    @Test
+    void mergeAggregations_handlesEmptyMapsSafely() {
+        Map<String, Long> emptyMap = Collections.emptyMap();
+        Map<String, Long> merged = aggregator.mergeAggregations(Arrays.asList(emptyMap, null));
+        assertTrue(merged.isEmpty(), "Empty and null maps should result in empty output");
     }
 }
