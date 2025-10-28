@@ -1,19 +1,34 @@
 # 🧠 BugMind Core
 
-**BugMind Core** is the foundational module of an AI-assisted developer intelligence suite — a **Java-based engine** built for analyzing, parsing, and reasoning over application logs, designed under **SWE-Bench Private Repo** guidelines.
+BugMind Core is the foundational Java library for intelligent log analysis, designed to transform unstructured application logs into structured, queryable data.  
+It serves as the core logic engine for future BugMind modules such as:
+- 🧩 **BugMind AI** — automated anomaly classification  
+- 📊 **BugMind Dashboard** — visual log analytics  
+- 🤖 **BugMind Insight** — LLM-based code and runtime intelligence  
 
-It showcases how feature and bug-fix workflows can be modeled for LLM-based software reasoning systems — with clear issue-PR linking, deterministic test coverage (P2P/F2P), and compliance with SWE-Bench Trainer Workflow V2.
+---
+
+## 🌟 Vision
+
+Modern applications produce massive, unstructured log data.  
+BugMind Core enables **structure, meaning, and intelligence** in this data by:
+- Parsing raw text logs into structured records  
+- Normalizing patterns (timestamps, levels, exceptions)  
+- Preparing machine-readable features for downstream AI/ML systems  
+
+Ultimately, BugMind aims to be the **AI layer for developer observability** — connecting code behavior with intelligent diagnostics.
 
 ---
 
-## 🧩 Purpose
+## ⚙️ Tech Stack
 
-BugMind Core demonstrates **structured log analysis** — converting raw text logs into machine-readable formats that can later power higher-level AI components like anomaly detection, observability dashboards, and reasoning engines.
-
-This repository forms the **core logic** layer for future BugMind modules:
-- `bugmind-parser` (semantic extraction)
-- `bugmind-ai` (LLM-driven diagnostics)
-- `bugmind-dashboard` (visual log analytics)
-- `bugmind-sim` (synthetic log simulation for testing)
+| Component | Details |
+|------------|----------|
+| **Language** | Java 17 |
+| **Build Tool** | Apache Maven |
+| **Testing** | JUnit 5 |
+| **Code Style** | Google Java Format |
+| **Supported IDEs** | Eclipse, IntelliJ IDEA, VS Code |
 
 ---
+
