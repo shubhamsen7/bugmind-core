@@ -11,8 +11,7 @@ import java.util.Objects;
 /**
  * Utility class for aggregating log counts by severity level.
  * <p>
- * Summarizes a collection of {@link ParsedLog} objects and
- * produces a frequency map for each log level.
+ * This version fixes null and empty map handling in mergeAggregations().
  */
 public class LogLevelAggregator {
 
@@ -20,10 +19,7 @@ public class LogLevelAggregator {
     public static final String UNKNOWN = "UNKNOWN";
 
     /**
-     * Aggregates the number of log entries per level.
-     *
-     * @param logs list of ParsedLog entries, may be null or empty
-     * @return unmodifiable map with counts per log level (in insertion order)
+     * Aggregates log entries per level.
      */
     public Map<String, Long> aggregateByLevel(List<ParsedLog> logs) {
         if (logs == null || logs.isEmpty()) {
@@ -39,12 +35,6 @@ public class LogLevelAggregator {
         return Collections.unmodifiableMap(counts);
     }
 
-    /**
-     * Extracts and normalizes the level from a ParsedLog object.
-     *
-     * @param log ParsedLog instance (may be null)
-     * @return normalized upper-case level or UNKNOWN
-     */
     private String extractLevel(ParsedLog log) {
         if (log == null) {
             return UNKNOWN;
@@ -60,12 +50,6 @@ public class LogLevelAggregator {
         return trimmed.toUpperCase(Locale.ROOT);
     }
 
-    /**
-     * Increments the given key's count within the map.
-     *
-     * @param map counter map
-     * @param key level key
-     */
     private void increment(Map<String, Long> map, String key) {
         Objects.requireNonNull(map, "map must not be null");
         String k = (key == null || key.isEmpty()) ? UNKNOWN : key;
@@ -73,22 +57,49 @@ public class LogLevelAggregator {
     }
 
     /**
-     * Utility method to merge multiple aggregations (optional).
-     *
-     * @param partials list of smaller aggregation maps
-     * @return combined aggregation
+     * Merges multiple partial aggregation maps into one unified result.
+     * <p>
+     * Fixes:
+     * <ul>
+     *   <li>Handles null maps gracefully</li>
+     *   <li>Normalizes all keys to uppercase</li>
+     *   <li>Treats null/blank keys as UNKNOWN</li>
+     *   <li>Ensures counts are merged deterministically</li>
+     * </ul>
      */
     public Map<String, Long> mergeAggregations(List<Map<String, Long>> partials) {
         if (partials == null || partials.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<String, Long> merged = new HashMap<>();
-        for (Map<String, Long> m : partials) {
-            if (m == null) continue;
-            for (Map.Entry<String, Long> e : m.entrySet()) {
-                merged.merge(e.getKey(), e.getValue(), Long::sum);
+
+        Map<String, Long> merged = new LinkedHashMap<>();
+
+        for (Map<String, Long> part : partials) {
+            if (part == null || part.isEmpty()) {
+                continue;
+            }
+
+            for (Map.Entry<String, Long> entry : part.entrySet()) {
+                String rawKey = entry.getKey();
+                Long value = entry.getValue();
+
+                String normalizedKey = normalizeKey(rawKey);
+                long safeValue = (value == null || value < 0) ? 0L : value;
+
+                merged.merge(normalizedKey, safeValue, Long::sum);
             }
         }
+
         return Collections.unmodifiableMap(merged);
+    }
+
+    /**
+     * Normalizes a level key to uppercase and replaces null/blank with UNKNOWN.
+     */
+    private String normalizeKey(String key) {
+        if (key == null || key.trim().isEmpty()) {
+            return UNKNOWN;
+        }
+        return key.trim().toUpperCase(Locale.ROOT);
     }
 }
