@@ -49,4 +49,21 @@ public class LogParserStackTraceTest {
         List<ParsedLog> result = parser.parseLogs(log);
         assertTrue(result.isEmpty());
     }
+    @Test
+    void testPreviouslyUnparsedStackTraceNowParsed() {
+        String logs = """
+            [2025-10-27 14:00:00] ERROR - IndexOutOfBoundsException thrown
+                at com.example.Util.process(Util.java:55)
+                at com.example.App.main(App.java:10)
+            """;
+
+        List<ParsedLog> result = parser.parseLogs(logs);
+
+        // Before fix: result would have been empty or only first line parsed
+        assertEquals(1, result.size());
+        ParsedLog entry = result.get(0);
+        assertTrue(entry.getMessage().contains("IndexOutOfBoundsException"));
+        assertTrue(entry.getMessage().contains("Util.process"));
+    }
+
 }
