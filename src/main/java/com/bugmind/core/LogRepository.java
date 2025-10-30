@@ -1,6 +1,7 @@
 package com.bugmind.core;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -23,10 +24,17 @@ public class LogRepository {
         return new ArrayList<>(logs);
     }
 
+    /**
+     * Case-insensitive exact match on level (no partials),
+     * with defensive null/blank handling.
+     */
     public List<ParsedLog> findByLevel(String level) {
-        if (level == null) return List.of();
+        if (level == null || level.isBlank()) return List.of();
+        final String normalized = level.trim();
+
         return logs.stream()
-                .filter(l -> level.equalsIgnoreCase(l.getLevel()))
+                .filter(l -> l.getLevel() != null
+                        && l.getLevel().equalsIgnoreCase(normalized))
                 .collect(Collectors.toList());
     }
 
