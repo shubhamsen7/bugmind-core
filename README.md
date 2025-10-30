@@ -38,6 +38,22 @@ Ultimately, BugMind aims to be the **AI layer for developer observability** — 
 | Method | Endpoint | Description |
 |---------|-----------|-------------|
 | GET | `/api/logs/level/{level}` | Retrieve all parsed logs matching the given level (INFO, WARN, ERROR, etc.) |
+**Example Request**
+GET /api/logs/level/ERROR
+
+pgsql
+Copy code
+
+**Example Response**
+```json
+[
+  {
+    "timestamp": "2025-10-30 10:02:00",
+    "level": "ERROR",
+    "message": "NullPointerException in Service",
+    "exceptionType": "NullPointerException"
+  }
+]
 
 
 
