@@ -1,10 +1,9 @@
 package com.bugmind.core;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service with enhanced multi-level search and de-duplication.
+ * Service that interacts with LogRepository for business logic.
  */
 public class LogService {
 
@@ -15,45 +14,16 @@ public class LogService {
     }
 
     /**
-     * Legacy single-level path (kept for backward compatibility).
+     * Backward compatible single-level delegation.
      */
     public List<ParsedLog> getLogsByLevel(String level) {
-        if (level == null) return List.of();
-        return repository.findByLevel(level.trim());
+        return repository.findByLevel(level);
     }
 
     /**
-     * New multi-level path used by the controller.
-     * - Merges results across levels
-     * - Removes duplicates by (timestamp + message)
+     * Multi-level sorted query.
      */
-    public List<ParsedLog> getLogsByLevels(List<String> levels) {
-        if (levels == null || levels.isEmpty()) return List.of();
-
-        final List<ParsedLog> merged = new ArrayList<>();
-        for (String lvl : levels) {
-            merged.addAll(repository.findByLevel(lvl));
-        }
-
-        // De-duplicate by timestamp + message (stable order)
-        final List<ParsedLog> unique = new ArrayList<>();
-        for (ParsedLog log : merged) {
-            final String ts = log.getTimestamp() == null ? "" : log.getTimestamp();
-            final String msg = log.getMessage() == null ? "" : log.getMessage();
-
-            boolean exists = false;
-            for (ParsedLog u : unique) {
-                final String uts = u.getTimestamp() == null ? "" : u.getTimestamp();
-                final String umsg = u.getMessage() == null ? "" : u.getMessage();
-                if (uts.equals(ts) && umsg.equals(msg)) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists) {
-                unique.add(log);
-            }
-        }
-        return unique;
+    public List<ParsedLog> getLogsByLevelsSorted(List<String> levels, boolean desc) {
+        return repository.findByLevelsSorted(levels, desc);
     }
 }
