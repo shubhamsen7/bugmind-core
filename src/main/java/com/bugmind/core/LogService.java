@@ -1,9 +1,10 @@
 package com.bugmind.core;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Provides higher-level operations for log retrieval.
+ * Service with enhanced multi-level search and de-duplication.
  */
 public class LogService {
 
@@ -14,16 +15,45 @@ public class LogService {
     }
 
     /**
-     * Retrieves logs by level, case-insensitive.
+     * Legacy single-level path (kept for backward compatibility).
      */
     public List<ParsedLog> getLogsByLevel(String level) {
-        return repository.findByLevel(level);
+        if (level == null) return List.of();
+        return repository.findByLevel(level.trim());
     }
 
     /**
-     * Adds a new parsed log entry to the repository.
+     * New multi-level path used by the controller.
+     * - Merges results across levels
+     * - Removes duplicates by (timestamp + message)
      */
-    public void addLog(ParsedLog log) {
-        repository.add(log);
+    public List<ParsedLog> getLogsByLevels(List<String> levels) {
+        if (levels == null || levels.isEmpty()) return List.of();
+
+        final List<ParsedLog> merged = new ArrayList<>();
+        for (String lvl : levels) {
+            merged.addAll(repository.findByLevel(lvl));
+        }
+
+        // De-duplicate by timestamp + message (stable order)
+        final List<ParsedLog> unique = new ArrayList<>();
+        for (ParsedLog log : merged) {
+            final String ts = log.getTimestamp() == null ? "" : log.getTimestamp();
+            final String msg = log.getMessage() == null ? "" : log.getMessage();
+
+            boolean exists = false;
+            for (ParsedLog u : unique) {
+                final String uts = u.getTimestamp() == null ? "" : u.getTimestamp();
+                final String umsg = u.getMessage() == null ? "" : u.getMessage();
+                if (uts.equals(ts) && umsg.equals(msg)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                unique.add(log);
+            }
+        }
+        return unique;
     }
 }
