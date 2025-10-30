@@ -31,4 +31,13 @@ Ultimately, BugMind aims to be the **AI layer for developer observability** — 
 | **Supported IDEs** | Eclipse, IntelliJ IDEA, VS Code |
 
 ---
+---
+
+### 🧩 Log Retrieval API
+
+| Method | Endpoint | Description |
+|---------|-----------|-------------|
+| GET | `/api/logs/level/{level}` | Retrieve all parsed logs matching the given level (INFO, WARN, ERROR, etc.) |
+
+
 
