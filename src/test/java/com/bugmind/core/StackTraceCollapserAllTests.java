@@ -60,7 +60,6 @@ public class StackTraceCollapserAllTests {
                 "Should extract deepest 'Caused by' throwable (fails now)");
     }
 
-    // ---------------- P2P #1 ----------------
     @Test
     void parserUsesCollapserAndKeepsTimestampNormalization() {
         String logs = """
@@ -80,7 +79,6 @@ public class StackTraceCollapserAllTests {
         assertEquals("com.example.CustomException", e.getExceptionType());
     }
 
-    // ---------------- P2P #2 ----------------
     @Test
     void parserStillParsesSingleLineMessages() {
         String line = "[2025-10-27 21:12:00.123] WARN - Cache miss rate high";
@@ -92,8 +90,6 @@ public class StackTraceCollapserAllTests {
         assertEquals("2025-10-27 21:12:00", e.getTimestamp());
     }
 
-
-    // ---------------- P2P #4 ----------------
     @Test
     void supportsVariousTimestampFormats() {
         String logs = """
