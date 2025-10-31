@@ -39,7 +39,6 @@ public class LogControllerFilterBugTest {
     @Test
     void testMixedCaseAndCommaSeparatedLevelsDeduplicateProperly() {
         List<ParsedLog> result = controller.getLogsByLevel(" info , ERROR ");
-        // Expected: INFO(2) + ERROR(1) = 3 total unique
         assertEquals(3, result.size(),
                 "Should return 3 unique logs ignoring case, spaces, and duplicates");
     }
