@@ -1,13 +1,11 @@
 package com.bugmind.core;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Enhanced controller: supports multiple levels, trims/normalizes input,
- * validates, and delegates to multi-level service query.
+ * REST-like controller for logs with sorting and backward compatibility.
  */
 public class LogController {
 
@@ -19,33 +17,41 @@ public class LogController {
     }
 
     /**
-     * Handles GET /api/logs/level/{level}
-     * Accepts comma-separated, case-insensitive levels, e.g. " info , ERROR ".
-     * Returns de-duplicated results (by timestamp+message).
+     * ✅ Backward-compatible API — old integration tests still call this.
      */
     public List<ParsedLog> getLogsByLevel(String rawLevel) {
         if (rawLevel == null || rawLevel.isBlank()) {
             throw new IllegalArgumentException("Log level must not be blank");
         }
 
-        final List<String> normalizedLevels = normalizeLevels(rawLevel);
-        if (normalizedLevels.isEmpty()) {
-            throw new IllegalArgumentException("Invalid log level input: " + rawLevel);
-        }
-
-        logger.info(() -> "Filtering logs for levels: " + String.join(",", normalizedLevels));
-        return logService.getLogsByLevels(normalizedLevels);
-    }
-
-    /**
-     * Split by comma, trim, uppercase, drop blanks, and make distinct.
-     */
-    private List<String> normalizeLevels(String input) {
-        return Arrays.stream(input.split(","))
+        List<String> levels = Arrays.stream(rawLevel.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .map(String::toUpperCase)
                 .distinct()
                 .collect(Collectors.toList());
+
+        logger.info(() -> "Fetching logs for levels " + levels);
+        return logService.getLogsByLevelsSorted(levels, false);
+    }
+
+    /**
+     * 🆕 New API that adds optional sorting support.
+     * Example: /api/logs/level/{level}?sort=desc
+     */
+    public List<ParsedLog> getLogsByLevelAndSort(String rawLevel, String sortOrder) {
+        if (rawLevel == null || rawLevel.isBlank()) {
+            throw new IllegalArgumentException("Log level must not be blank");
+        }
+        List<String> levels = Arrays.stream(rawLevel.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toUpperCase)
+                .distinct()
+                .collect(Collectors.toList());
+
+        boolean desc = "desc".equalsIgnoreCase(sortOrder);
+        logger.info(() -> "Fetching logs for levels " + levels + " sorted=" + (desc ? "DESC" : "ASC"));
+        return logService.getLogsByLevelsSorted(levels, desc);
     }
 }
